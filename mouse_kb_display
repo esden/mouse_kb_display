@@ -87,14 +87,13 @@ sub watch_callback {
     if(/EV_(KEY|REL).*code [0-9]+ \((KEY|BTN|REL)_(.*?)\).*value (0|1|-1)/){
       my ($code_type, $code_name, $value) = ($2, $3, $4);
       if ($code_type eq 'KEY') {
-        # shorten LEFT*/RIGHT*, SPACE/BACKSPACE, PAGEUP/DOWN
+        # shorten LEFT*/RIGHT*
         $code_name =~ s/^LEFT(.+)/L$1/;
         $code_name =~ s/^RIGHT(.+)/R$1/;
-        $code_name =~ s/SPACE$/SPC/;
-        $code_name =~ s/^PAGE(.+)/PG$1/;
+	#$code_name =~ s/^PAGE(.+)/PG$1/;
         # replace META with WIN, as that is what people are familiar with
         # also COMPOSE with MENU (further below)
-        $code_name =~ s/^([LR])META$/$1WIN/;
+	#$code_name =~ s/^([LR])META$/$1WIN/;
         # replace long names
         my %key = (
           'SEMICOLON' => ';',
@@ -110,6 +109,14 @@ sub watch_callback {
           'EQUAL' => '=',
           'ENTER' => '⏎',
           'COMPOSE' => 'MENU',
+	  'SPACE' => '␣',
+	  'BACKSPACE' => '↤',
+	  'UP' => '↑',
+	  'DOWN' => '↓',
+	  'LEFT' => '←',
+	  'RIGHT' => '→',
+	  'PAGEUP' => '↟',
+	  'PAGEDOWN' => '↡',
         );
         $code_name = $key{$code_name} if defined($key{$code_name});
       } elsif ($code_type eq 'REL' && $code_name eq 'WHEEL') {
@@ -124,11 +131,18 @@ sub watch_callback {
           'SIDE' => 'XMB1',
           'EXTRA' => 'XMB2',
           'FORWARD' => 'XMB3',
+	  'TOOL_FINGER' => '',
+	  'TOOL_DOUBLETAP' => '',
+	  'TOUCH' => '',
         );
         $code_name = $but{$code_name} if defined($but{$code_name});
       } else {
         # ignore other inputs, like REL_X/REL_Y
         $value = 0;
+      }
+      if ($code_type eq 'KEY' and length $code_name eq 1) {
+	# Convert from QWERTY layout to DVORAK layout.
+	$code_name =~ tr#QWERTYUIOP[]\\ASDFGHJKL;'ZXCVBNM,./\-=#',.PYFGCRL/=\\AOEUIDHTNS\-;QJKXBMWVZ[]#;
       }
       if ($value) {
         $state->{$code_name} = time;
